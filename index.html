@@ -897,16 +897,20 @@ section { padding:80px; position:relative; }
         </div>
       </div>
       <div class="auth-form">
-        <div class="form-head">// SECURE COMM // AES-256 // TOR-ROUTED //</div>
-        <form name="contact" id="contactForm" data-netlify="true" netlify-honeypot="bot-field" onsubmit="submitForm(event)">
-          <input type="hidden" name="form-name" value="contact">
-          <p style="display:none"><input name="bot-field"></p>
-          <div class="fg"><label class="fl">Callsign</label><input type="text" name="name" class="fi" placeholder="identify yourself..." required></div>
-          <div class="fg"><label class="fl">Uplink Address</label><input type="email" name="email" class="fi" placeholder="your@secure.channel" required></div>
-          <div class="fg"><label class="fl">Mission Brief</label><textarea name="message" class="fta" rows="4" placeholder="[ENCRYPTED] describe the operation..." required></textarea></div>
-          <button type="submit" class="btn-submit" id="submitBtn"><span>⚡ INITIATE UPLOAD</span></button>
-        </form>
-      </div>
+  <div class="form-head">// SECURE COMM // AES-256 // TOR-ROUTED //</div>
+  <!-- Keep name="contact" and the hidden form-name input identical -->
+  <form name="contact" id="contactForm" data-netlify="true" netlify-honeypot="bot-field" onsubmit="submitForm(event)">
+    <input type="hidden" name="form-name" value="contact">
+    <p style="display:none"><input name="bot-field"></p>
+    
+    <div class="fg"><label class="fl">Callsign</label><input type="text" name="name" class="fi" placeholder="identify yourself..." required></div>
+    <div class="fg"><label class="fl">Uplink Address</label><input type="email" name="email" class="fi" placeholder="your@secure.channel" required></div>
+    <div class="fg"><label class="fl">Mission Brief</label><textarea name="message" class="fta" rows="4" placeholder="[ENCRYPTED] describe the operation..." required></textarea></div>
+    
+    <button type="submit" class="btn-submit" id="submitBtn"><span>⚡ INITIATE UPLOAD</span></button>
+  </form>
+</div>
+
     </div>
   </section>
 
@@ -1382,37 +1386,41 @@ function toggleMusic() {
 })();
 
 /* ══════════════════════════════════════
-   FORM SUBMIT
-══════════════════════════════════════ */
-async function submitForm(e){
+/* ══════════════════════════════════════
+   FORM SUBMIT (FIXED FOR NETLIFY)
+   ══════════════════════════════════════ */
+async function submitForm(e) {
   e.preventDefault();
-  const form = document.getElementById('contactForm');
+  
+  const form = e.target; // Using e.target is more reliable
   const btn  = document.getElementById('submitBtn');
   const sp   = btn.querySelector('span');
 
-  // Transmitting state
   sp.textContent = '⚡ TRANSMITTING...';
   btn.disabled = true;
   btn.style.opacity = '0.8';
 
   try {
     const data = new FormData(form);
-    const res  = await fetch('/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(data).toString()
+    
+    // The "form-name" field is REQUIRED for Netlify to find the form
+    const res = await fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(data).toString(),
     });
 
-    if(res.ok){
+    if (res.ok) {
       sp.textContent = '✓ UPLOAD COMPLETE';
       btn.style.background = '#00FF88';
       btn.style.color = '#000';
       btn.style.boxShadow = '0 0 30px rgba(0,255,136,0.5)';
       form.reset();
     } else {
-      throw new Error('Network error');
+      throw new Error('Netlify Uplink Refused');
     }
-  } catch(err){
+  } catch (err) {
+    console.error("Submission Error:", err);
     sp.textContent = '✗ TRANSMISSION FAILED — RETRY';
     btn.style.background = 'rgba(255,50,50,0.3)';
     btn.style.borderColor = '#FF4466';
@@ -1420,6 +1428,7 @@ async function submitForm(e){
     btn.disabled = false;
   }
 }
+
 </script>
 </body>
 </html>
